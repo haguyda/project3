@@ -33,24 +33,11 @@ public class ConnectionPool {
         }
     }
 
-    public void closeAllConnections() {
-        synchronized (this.connections){
-            while (this.connections.size()!=10){
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            this.connections.clear();
-        }
-    }
-
     public Connection getConnection() {
         synchronized (this.connections) {
             if (connections.size() == 0) {
                 try {
-                    wait();
+                    this.connections.wait();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -59,10 +46,23 @@ public class ConnectionPool {
         }
     }
 
-    public void returnConnection(Connection connection) {
+    public void restoreConnection(Connection connection) {
         synchronized (this.connections) {
             connections.push(connection);
-            notify();
+            this.connections.notify();
+        }
+    }
+
+    public void closeAllConnections() {
+        synchronized (this.connections){
+            while (this.connections.size()!=SIZE){
+                try {
+                    this.connections.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            this.connections.clear();
         }
     }
 }

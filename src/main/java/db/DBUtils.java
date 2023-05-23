@@ -14,11 +14,14 @@ public class DBUtils {
         Connection connection = null;
         PreparedStatement statement = null;
 
+        // Step 2 - Open Connection to Database
         connection = getConnection();
 
+        // Step 3 - Prepare Statement & Execute
         statement = getPreparedStatement(connection, sql);
         execute(statement);
 
+        // Step 5 - Close Resources
         closePreparedStatement(statement);
         closeConnection(connection);
 
@@ -28,12 +31,15 @@ public class DBUtils {
         Connection connection = null;
         PreparedStatement statement = null;
 
+        // Step 2 - Open Connection to Database
         connection = getConnection();
 
+        // Step 3 - Prepare Statement & Execute
         statement = getPreparedStatement(connection, sql);
         statement = updatePrepareStatementWithParam(statement, map);
         execute(statement);
 
+        // Step 5 - Close resources
         closePreparedStatement(statement);
         closeConnection(connection);
     }
@@ -42,12 +48,16 @@ public class DBUtils {
 
         List<?> results = new ArrayList<>();
 
+        // Step 2 - Open Connection to Database
         Connection connection = getConnection();
+        // Step 3 - Prepare Statement & Execute
         PreparedStatement statement = getPreparedStatement(connection, sql);
+        // Step 4 - ResultSet - Relevant only for DQL (select...)
         ResultSet resultSet = getResultSet(statement);
 
         results = resultSetToArrayList(resultSet);
 
+        // Step 5 - Close the Connection to Database
         closeResultSet(resultSet);
         closePreparedStatement(statement);
         closeConnection(connection);
@@ -57,13 +67,17 @@ public class DBUtils {
     public static List<?> runQueryWithResultSet(String sql, Map<Integer, Object> map) {
         List<?> results = new ArrayList<>();
 
+        // Step 2 - Open Connection to Database
         Connection connection = getConnection();
+        // Step 3 - Prepare Statement & Execute
         PreparedStatement statement = getPreparedStatement(connection, sql);
         statement = updatePrepareStatementWithParam(statement, map);
+        // Step 4 - ResultSet - Relevant only for DQL (select...)
         ResultSet resultSet = getResultSet(statement);
 
         results = resultSetToArrayList(resultSet);
 
+        // Step 5 - Close the Connection to Database
         closeResultSet(resultSet);
         closePreparedStatement(statement);
         closeConnection(connection);
@@ -72,23 +86,11 @@ public class DBUtils {
 
 
     private static Connection getConnection() {
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(Credentials.URL, Credentials.USER, Credentials.PASSWORD);
-        } catch (SQLException e) {
-            System.out.println("Unable to open connection " + e.getMessage());
-        }
-        return connection;
+        return ConnectionPool.getConnectionPool().getConnection();
     }
 
     private static void closeConnection(Connection connection) {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                System.out.println("Unable to close connection " + e.getMessage());
-            }
-        }
+        ConnectionPool.getConnectionPool().restoreConnection(connection);
     }
 
     private static PreparedStatement getPreparedStatement(Connection connection, String sql) {
